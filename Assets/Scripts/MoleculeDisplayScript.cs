@@ -280,7 +280,7 @@ public class MoleculeDisplayScript : MonoBehaviour
 
             SelectedMolecule = id;
             
-            Debug.Log("Mouse click at position: " + _mousePos + " color: " + color + " id: " + id);
+            //Debug.Log("Mouse click at position: " + _mousePos + " color: " + color + " id: " + id);
 
             DestroyImmediate(idTexture2D);
             _leftMouseDown = false;

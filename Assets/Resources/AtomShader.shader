@@ -182,7 +182,7 @@
 		float3 atomColor = (showAtomColors > 0 ) ? atomColors[round(input.info.y)].rgb : molColors[round(input.info.w)].rgb;
 		
 		//atomColor = ( round(input.info_2.x) < 2 ) ? atomColor :  ModifyHSL(atomColor, float3(-1, highlightIntensity, -1));
-		atomColor = ( round(input.info_2.x) < 2 ) ? ModifyHSV(atomColor, float3(0, 0, 0.05)) :  ModifyHSL(atomColor, float3(0, highlightIntensity, highlightIntensity));
+		atomColor = ( round(input.info_2.x) < 2 ) ? ModifyHSL(atomColor, float3(0, -0.025, -0.025)) :  ModifyHSL(atomColor, float3(0, highlightIntensity, highlightIntensity));
 
 		float3 finalColor = atomColor * pow(ndotl, 0.075);				
 		color = float4(finalColor, 1);

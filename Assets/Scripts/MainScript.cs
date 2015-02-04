@@ -46,7 +46,7 @@ public class MainScript : MonoBehaviour
     {
         if (MoleculeColors.SequenceEqual(_moleculeColors)) return;
 
-        Debug.Log("Color changed");
+        //Debug.Log("Color changed");
         _moleculeColors = new List<Color>(MoleculeColors);
 
         foreach (var molecule in GameObjects.Select(go => go.GetComponent<MoleculeScript>()))
