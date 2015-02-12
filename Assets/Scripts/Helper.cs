@@ -5,12 +5,12 @@ public static class Helper
 {
     public static Vector4 QuanternionToVector4(Quaternion q)
     {
-        return new Vector4(q.x, q.y, q.z, q.z);
+        return new Vector4(q.x, q.y, q.z, q.w);
     }
 
     public static void QuanternionIntoVector4(Quaternion q, ref Vector4 v)
     {
-        v.Set(q.x, q.y, q.z, q.z);
+        v.Set(q.x, q.y, q.z, q.w);
     }
 
     public static Vector3 FloatArrayToVector3(float[] floatArray)

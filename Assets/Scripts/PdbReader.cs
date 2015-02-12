@@ -5,6 +5,14 @@ using System.Linq;
 
 using UnityEngine;
 
+public class Atom
+{
+    private float x;
+    private float y;
+    private float z;
+    private float type;
+}
+
 public static class PdbReader
 {
     public static string[] AtomSymbols = { "C", "H", "N", "O", "P", "S" };
@@ -19,7 +27,7 @@ public static class PdbReader
         new Color(0.960f, 0.521f, 0.313f, 1f) 
     };
     
-    public static List<Vector4> ReadPdbFile(string path)
+    public static Vector4[] ReadPdbFile(string path)
     {
         if (!File.Exists(path)) throw new Exception("Pdb file not found");
 
@@ -60,7 +68,7 @@ public static class PdbReader
 
         Debug.Log("Loaded " + atoms.Count + " atoms.");
 
-        return atoms;
+        return atoms.ToArray();
     }
 }
 
