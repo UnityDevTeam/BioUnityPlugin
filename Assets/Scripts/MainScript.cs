@@ -103,6 +103,7 @@ public class MainScript : MonoBehaviour
         molecule.Id = uniqueId;
         molecule.Type =  _moleculeNames.IndexOf(pdbName);
         molecule.State = (int)MolState.Normal;
+        molecule.Color = MoleculeColors[molecule.Type];
 
         // Add game object to the list
         GameObjects.Add(gameObject);
@@ -120,7 +121,7 @@ public class MainScript : MonoBehaviour
 
     public void SelectMolecule(int moleculeIndex)
     {
-        Debug.Log("Set selection to: " + moleculeIndex);
+        //Debug.Log("Set selection to: " + moleculeIndex);
 
         if (_moleculeDisplayScript.SelectedMolecule >= 0 &&_moleculeDisplayScript.SelectedMolecule < GameObjects.Count)
         {
@@ -206,7 +207,7 @@ public class MainScript : MonoBehaviour
             positions[i] = go.transform.position;
             rotations[i] = Helper.QuanternionToVector4(go.transform.rotation);
             states[i] = molecule.State;
-            types[i] = 0;
+            types[i] = molecule.Type;
         }
 
         // Send mol information to the renderer

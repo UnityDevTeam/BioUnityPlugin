@@ -17,7 +17,7 @@ public class SimpleScript : MainScript
     public void FireEvent()
     {
         // Add a new molecule in the scene at position 0,0,0
-        this.AddMoleculeInstance("2OAU", new Vector3(0, 10, 0), Quaternion.identity);
+        this.AddMoleculeInstance("2RH1", new Vector3(0, 10, 0), Quaternion.identity);
     }
 
     // Use this for initialization

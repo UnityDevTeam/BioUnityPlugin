@@ -9,14 +9,21 @@ enum MolState
 
 public class MoleculeScript : MonoBehaviour
 {
+    [HideInInspector]
+    [SerializeField]
     public int Id;
+
+    [HideInInspector]
+    [SerializeField]
     public int Type;
+
+    [HideInInspector]
+    [SerializeField]
     public int State;
 
     [HideInInspector]
     [SerializeField]
     public Color Color;
-
     
     public MainScript MainScript;
 

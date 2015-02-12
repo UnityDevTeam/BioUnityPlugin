@@ -10,10 +10,10 @@ Shader "Custom/MolShader"
 		 float4 info;
 	};
 
-	uniform float scale;		
-
-	uniform	StructuredBuffer<int> molStates;
+	uniform float scale;	
+	
 	uniform	StructuredBuffer<int> molTypes;
+	uniform	StructuredBuffer<int> molStates;
 	uniform StructuredBuffer<int> molAtomCountBuffer;										
 	uniform StructuredBuffer<int> molAtomStartBuffer;	
 											

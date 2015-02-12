@@ -42,8 +42,13 @@ public class MoleculeDisplayScript : MonoBehaviour
     private ComputeBuffer _atomRadiiBuffer;
     private ComputeBuffer _atomColorsBuffer;
 
+    [NonSerialized]
     private List<int> _atomCount = new List<int>();
+
+    [NonSerialized]
     private List<int> _atomStart = new List<int>();
+
+    [NonSerialized]
     private List<Vector4> _atomDataPdb = new List<Vector4>();
 
     /*****/  
@@ -97,6 +102,8 @@ public class MoleculeDisplayScript : MonoBehaviour
 
     private void ReleaseResources()
     {
+        Debug.Log("Release buffers");
+
         if (_drawArgsBuffer != null) _drawArgsBuffer.Release();
         if (_atomDataBuffer != null) _atomDataBuffer.Release();        
         if (_molTypesBuffer != null) _molTypesBuffer.Release();
@@ -138,6 +145,7 @@ public class MoleculeDisplayScript : MonoBehaviour
     {
         CreateResources();
 
+        Debug.Log("Load molecule : " + pdbName);
         var atoms = PdbReader.ReadPdbFile(Application.dataPath + "/Molecules/" + pdbName + ".pdb");
         
         _atomCount.Add(atoms.Count);
