@@ -3,6 +3,11 @@ using UnityEngine;
 
 public static class Helper
 {
+    public static Quaternion RotationMatrixToQuaternion(Matrix4x4 m)
+    {
+        return Quaternion.LookRotation(m.GetColumn(2), m.GetColumn(1));
+    }
+
     public static Vector4 QuanternionToVector4(Quaternion q)
     {
         return new Vector4(q.x, q.y, q.z, q.w);

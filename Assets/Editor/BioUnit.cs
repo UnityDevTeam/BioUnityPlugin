@@ -5,12 +5,14 @@ using UnityEditor;
 class BioUnit
 {
     private List<Vector4[]> chains;
-    private List<Quaternion> quarternions;
+    private List<Quaternion> rotations;
+    private List<Vector3> positions;
 
-    public BioUnit(List<Vector4[]> chains, List<Quaternion> quarternions)
+    public BioUnit(List<Vector4[]> chains, List<Quaternion> rotations, List<Vector3> positions)
     {
         this.chains = chains;
-        this.quarternions = quarternions;
+        this.rotations = rotations;
+        this.positions = positions;
     }
 
     public Vector4[] allAtomPositions()
@@ -46,14 +48,24 @@ class BioUnit
         return chains;
     }
 
-    public List<Quaternion> allQuarternions()
+    public List<Quaternion> allRotations()
     {
-        return quarternions;
+        return rotations;
     }
 
-    public Quaternion quarternionOfOneChain(int chainIndex)
+    public Quaternion rotationOfSubunitWithIndex(int subunitIndex)
     {
-        return quarternions[chainIndex];
+        return rotations[subunitIndex];
+    }
+
+    public List<Vector3> allPositions()
+    {
+        return positions;
+    }
+
+    public Vector3 positionOfSubunitWithIndex(int subunitIndex)
+    {
+        return positions[subunitIndex];
     }
 }
 
