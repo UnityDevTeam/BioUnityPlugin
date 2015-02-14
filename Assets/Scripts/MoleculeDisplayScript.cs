@@ -102,7 +102,7 @@ public class MoleculeDisplayScript : MonoBehaviour
 
     private void ReleaseResources()
     {
-        Debug.Log("Release buffers");
+        //Debug.Log("Release buffers");
 
         if (_drawArgsBuffer != null) _drawArgsBuffer.Release();
         if (_atomDataBuffer != null) _atomDataBuffer.Release();        
@@ -141,14 +141,11 @@ public class MoleculeDisplayScript : MonoBehaviour
         ReleaseResources();
     }
 
-    public void AddMoleculeType(string pdbName)
+    public void AddMoleculeType(Vector4[] atoms)
     {
         CreateResources();
-
-        Debug.Log("Load molecule : " + pdbName);
-        var atoms = PdbReader.ReadPdbFile(Application.dataPath + "/Molecules/" + pdbName + ".pdb");
         
-        _atomCount.Add(atoms.Count);
+        _atomCount.Add(atoms.Length);
         _atomStart.Add(_atomDataPdb.Count);
         _atomDataPdb.AddRange(atoms);
         
