@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public class MoleculeManagerWindow : EditorWindow {
 
     string pathToFile = string.Empty;
-    int selected = 1;
+    //int selected = 1;
 
     // Add menu item named "My Window" to the Window menu
     [MenuItem("Window/MoleculeManager")]
@@ -38,6 +38,7 @@ public class MoleculeManagerWindow : EditorWindow {
         if (GUILayout.Button("Open File"))
         {
             pathToFile = EditorUtility.OpenFilePanel("Open FILE", "", "pdb");
+            Debug.Log("Path: " + pathToFile);
         }
         if (GUILayout.Button("Download File"))
         {

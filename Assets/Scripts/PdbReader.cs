@@ -5,13 +5,14 @@ using System.Linq;
 
 using UnityEngine;
 
-public class Atom
+//Not used?
+/*public class Atom
 {
     private float x;
     private float y;
     private float z;
     private float type;
-}
+}*/
 
 public static class PdbReader
 {
