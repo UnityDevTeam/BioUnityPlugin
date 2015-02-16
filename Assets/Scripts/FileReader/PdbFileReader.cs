@@ -55,10 +55,14 @@ class PdbFileReader : IFileReader
                 subunitPositions.Add(position);
                 //Calculate quarternion and store it
                 subunitRotations.Add(Helper.RotationMatrixToQuaternion(matrix));
+
+                Debug.Log("Rotationmatrix: " + matrix + "\nPosition: " + position);
+
                 //reset variables
                 i = 0;
                 position = new Vector3();
             }
+            Debug.Log("Biounit consists of " + subunitRotations.Count + " subunits.");
         }
     }
 
@@ -94,8 +98,16 @@ class PdbFileReader : IFileReader
     }
 
     private void writeAtomsIntoAtomsSeperatedByChains(List<List<Vector4>> atoms){
+        int i = 1;
+        int count = 0;
+
         foreach(var atomsOfOnChain in atoms){
+            Debug.Log("Chain " + i + " consists of " + atomsOfOnChain.Count + " atoms!");
+            count += atomsOfOnChain.Count; 
+
+            i++;
             atomsSeperatedByChains.Add(atomsOfOnChain.ToArray());
         }
+        Debug.Log("One subunit consists of " + count +" atoms!");
     }
 }
