@@ -39,6 +39,16 @@ public class MoleculeManagerWindow : EditorWindow {
         {
             pathToFile = EditorUtility.OpenFilePanel("Open FILE", "", "pdb");
             Debug.Log("Path: " + pathToFile);
+
+            Component FileReader = GameObject.Find("Main Script").GetComponent("FileReaderScript");
+            if (FileReader == null)
+            {
+                Debug.Log("FileReader not present! Adding FileReader!");
+                GameObject.Find("Main Script").AddComponent("FileReaderScript");
+            }
+
+            GameObject.Find("Main Script").GetComponent("FileReaderScript").SendMessage("readFile", pathToFile);
+
         }
         if (GUILayout.Button("Download File"))
         {

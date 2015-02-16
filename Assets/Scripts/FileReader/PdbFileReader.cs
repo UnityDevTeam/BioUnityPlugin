@@ -10,13 +10,15 @@ class PdbFileReader : IFileReader
     private List<Vector4[]> atomsSeperatedByChains;
     private List<Quaternion> subunitRotations;
     private List<Vector3> subunitPositions;
-    private String usedRemarkForBioUnitCreation = "REMARK 350";
+    private String searchRegexForRotationMatrices = @"^REMARK\s350\s\s\sBIOMT";
 
     private String[] linesOfFile;
 
     public BioUnit readFile(string pathToFile)
     {
         if (!File.Exists(pathToFile)) throw new Exception("Pdb file not found");
+
+        initializeVariables();
 
         readLinesOfFile(pathToFile);
         loadRotationsAndPositions();
@@ -25,21 +27,37 @@ class PdbFileReader : IFileReader
         return new BioUnit(atomsSeperatedByChains, subunitRotations, subunitPositions);
     }
 
+    private void initializeVariables()
+    {
+        atomsSeperatedByChains = new List<Vector4[]>();
+        subunitPositions = new List<Vector3>();
+        subunitRotations = new List<Quaternion>();
+    }
+
     private void readLinesOfFile(String path){
         linesOfFile = File.ReadAllLines(path);
     }
 
+    private Boolean checkLine(String line)
+    {
+        return System.Text.RegularExpressions.Regex.IsMatch(line, searchRegexForRotationMatrices);
+    }
+
     private void loadRotationsAndPositions(){
+        Debug.Log("Begin loading of Rotations and Positions!");
+        int i = 0;
+        Matrix4x4 matrix = Matrix4x4.identity;
+        Vector3 position = new Vector3();
+        
         foreach (var line in linesOfFile)
         {
-            int i = 0;
-            Matrix4x4 matrix = Matrix4x4.identity;
-            Vector3 position = new Vector3();
 
-            if (line.StartsWith(usedRemarkForBioUnitCreation))
+            if (checkLine(line))
             {
                 var split = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+//                Debug.Log("Row split in " + split.Length + " parts");
                 var values = split.Where(s => s.Contains(".")).ToList();
+//                Debug.Log("Amount of values: " + values.Count);
 
                 matrix[i,0] = float.Parse(values[0]);
                 matrix[i,1] = float.Parse(values[1]);
@@ -56,14 +74,12 @@ class PdbFileReader : IFileReader
                 //Calculate quarternion and store it
                 subunitRotations.Add(Helper.RotationMatrixToQuaternion(matrix));
 
-                Debug.Log("Rotationmatrix: " + matrix + "\nPosition: " + position);
-
                 //reset variables
                 i = 0;
                 position = new Vector3();
             }
-            Debug.Log("Biounit consists of " + subunitRotations.Count + " subunits.");
         }
+        Debug.Log("Biounit consists of " + subunitRotations.Count + " subunits.");
     }
 
     private void loadAtoms(){
@@ -78,7 +94,6 @@ class PdbFileReader : IFileReader
                 if (newChain)
                 {
                     currentChain = new List<Vector4>();
-                    atoms.Add(currentChain);
                     newChain = false;
                 }
 
@@ -91,7 +106,12 @@ class PdbFileReader : IFileReader
                 currentChain.Add(atom);
             }
 
-            if (line.StartsWith("TER")) newChain = true;
+            if (line.StartsWith("TER"))
+            {
+                Debug.Log("TER found -> terminating chain with " + currentChain.Count + " atoms!");
+                atoms.Add(currentChain);
+                newChain = true;
+            }
         }
 
         writeAtomsIntoAtomsSeperatedByChains(atoms);
@@ -103,7 +123,7 @@ class PdbFileReader : IFileReader
 
         foreach(var atomsOfOnChain in atoms){
             Debug.Log("Chain " + i + " consists of " + atomsOfOnChain.Count + " atoms!");
-            count += atomsOfOnChain.Count; 
+            count = count + atomsOfOnChain.Count; 
 
             i++;
             atomsSeperatedByChains.Add(atomsOfOnChain.ToArray());
