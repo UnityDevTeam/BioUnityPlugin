@@ -11,9 +11,23 @@ class FileReaderScript : MonoBehaviour
     private IFileReader pdbFileReader = new PdbFileReader();
     
     private IFileReader cifFileReader = new CifFileReader();
-    
+
+    private MainScript mainscript;
+
+    private Boolean UseChains = false;
+
+    void Start()
+    {
+        mainscript = GameObject.FindObjectOfType<MainScript>();
+    }
+
+    public void useChains(Boolean useChains)
+    {
+        this.UseChains = useChains;
+    }
+
     public void readFile(String path){
-        BioUnit biounit;
+        BioUnit biounit = null;
         
         if (path.EndsWith("cif"))
         {
@@ -27,6 +41,23 @@ class FileReaderScript : MonoBehaviour
         else
         {
             Debug.Log("Filetype not supported!");
+            return;
+        }
+
+        addBiounitToScene(biounit);
+    }
+
+    private void addBiounitToScene(BioUnit biounit)
+    {
+        if (UseChains)
+        {
+            Debug.Log("Biounit will be added to Scene.");
+            mainscript.AddBiounit(biounit);
+        }
+        else
+        {
+            Debug.Log("Biounit will be added to Scene. Chains suppressed");
+            mainscript.AddBiounitIgnoreChains(biounit);
         }
     }
 }

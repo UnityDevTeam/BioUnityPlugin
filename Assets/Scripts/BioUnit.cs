@@ -2,17 +2,34 @@
 using System.Collections.Generic;
 using UnityEditor;
 
-class BioUnit
+public class BioUnit
 {
     private List<Vector4[]> chains;
     private List<Quaternion> rotations;
     private List<Vector3> positions;
+    private string name;
 
-    public BioUnit(List<Vector4[]> chains, List<Quaternion> rotations, List<Vector3> positions)
+    public BioUnit(List<Vector4[]> chains, List<Quaternion> rotations, List<Vector3> positions, string name)
     {
         this.chains = chains;
         this.rotations = rotations;
         this.positions = positions;
+        this.name = name;
+    }
+
+    public string Name
+    {
+        get{
+            return name;
+        }
+    }
+
+    public int AmountOfChains
+    {
+        get
+        {
+            return chains.Count;
+        }
     }
 
     public Vector4[] allAtomPositions()

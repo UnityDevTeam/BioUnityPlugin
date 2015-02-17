@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 
 [ExecuteInEditMode]
@@ -38,11 +39,104 @@ public class MainScript : MonoBehaviour
     [NonSerialized]
     private List<GameObject> _gameObjects = new List<GameObject>();
 
+    private String chainPostfix = "-chain-";
+
     void OnEnable()
     {
         foreach (var go in gameObject.GetComponentsInChildren<MoleculeScript>())
         {
             GameObject.DestroyImmediate(go.gameObject);
+        }
+    }
+
+    public void AddBiounitIgnoreChains(BioUnit biounit)
+    {
+        AddMoleculeTypeIfNotAlreadyPresent(biounit, false, getRandomColor());
+        AddMoleculeInstancesForBiounit(biounit, false);
+    }
+
+    public void AddBiounit(BioUnit biounit)
+    {
+        AddMoleculeTypeIfNotAlreadyPresent(biounit, true, getRandomColor());
+        AddMoleculeInstancesForBiounit(biounit, true);
+    }
+
+    private void AddMoleculeInstancesForBiounit(BioUnit biounit, Boolean useChains)
+    {
+        String name = biounit.Name;
+        var rotations = biounit.allRotations();
+        var positions = biounit.allPositions();
+
+        if (positions.Count != rotations.Count) throw new Exception("Rotation- and positioncounts don't match!");
+
+        int amountOfSubunits = rotations.Count;
+
+        if (useChains)
+        {
+            AddMoleculeInstancesForBiounitUseChains(name + chainPostfix, positions, rotations, amountOfSubunits, biounit.AmountOfChains);
+        }
+        else
+        {
+            AddMoleculeInstancesForBiounit(name, positions, rotations, amountOfSubunits);
+        }
+    }
+
+    private void AddMoleculeInstancesForBiounit(String name, List<Vector3> positions, List<Quaternion> rotations, int amountOfSubunits)
+    {
+        for (int i = 0; i < amountOfSubunits; i++)
+        {
+            AddMoleculeInstance(name, positions[i], rotations[i]);
+        }
+    }
+
+    private void AddMoleculeInstancesForBiounitUseChains(String name, List<Vector3> positions, List<Quaternion> rotations, int amountOfSubunits, int amountOfChains)
+    {
+        for (int i = 0; i < amountOfSubunits; i++)
+        {
+            for (int j = 1; j <= amountOfChains; j++)
+            {
+                AddMoleculeInstance(name+j, positions[i], rotations[i]);
+            }
+        }
+    }
+
+    private void AddMoleculeTypeIfNotAlreadyPresent(BioUnit biounit, Boolean withChains, Color color)
+    {
+
+        Debug.Log("Check if the biounit subunit already present!");
+
+        String namePostfix = "";
+        if (withChains)
+        {
+            namePostfix = chainPostfix + "1";
+        }
+
+        if (HasMoleculeType(biounit.Name + namePostfix)) return;
+
+        Debug.Log("Add subunit typs!");
+
+        if (withChains)
+        {
+            addMoleculeTypeWithChains(biounit);
+            return;
+        }
+        AddMoleculeType(biounit.Name, color, biounit.allAtomPositions());
+        return;
+    }
+
+    private Color getRandomColor()
+    {
+        return new Color(Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f), Random.Range(0.0f, 1.0f));
+    }
+
+    private void addMoleculeTypeWithChains(BioUnit biounit)
+    {
+        int i = 1;
+        foreach (var chainAtoms in biounit.atomPositionsSeperatedByChain())
+        {
+            AddMoleculeType(biounit.Name + chainPostfix + i, getRandomColor(), chainAtoms);
+
+            i++;
         }
     }
 

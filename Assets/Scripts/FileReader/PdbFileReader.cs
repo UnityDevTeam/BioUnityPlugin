@@ -24,7 +24,18 @@ class PdbFileReader : IFileReader
         loadRotationsAndPositions();
         loadAtoms();
 
-        return new BioUnit(atomsSeperatedByChains, subunitRotations, subunitPositions);
+        return new BioUnit(atomsSeperatedByChains, subunitRotations, subunitPositions, readNameOutOfPath(pathToFile));
+    }
+
+    private String readNameOutOfPath(String path)
+    {
+        String[] splittedPath = path.Split(new Char[]{'/'});
+        String fileNameWithFiletype = splittedPath[splittedPath.Length - 1];
+        String filename = fileNameWithFiletype.Substring(0, fileNameWithFiletype.Length - 4);
+
+        Debug.Log("Filename: " + filename);
+
+        return filename;
     }
 
     private void initializeVariables()
