@@ -264,7 +264,7 @@ public class MainScript : MonoBehaviour
             var go = _gameObjects[i];
             var molecule = go.GetComponent<MoleculeScript>();
 
-            positions[i] = go.transform.position;
+            positions[i] = go.transform.position*Scale;
             rotations[i] = Helper.QuanternionToVector4(go.transform.rotation);
             states[i] = molecule.State;
             types[i] = molecule.Type;
