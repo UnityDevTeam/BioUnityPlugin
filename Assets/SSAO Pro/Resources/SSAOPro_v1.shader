@@ -10,6 +10,7 @@
 		#include "UnityCG.cginc"
 
 		sampler2D _MainTex;
+		sampler2D_float _DepthNormalMapF32;
 		sampler2D_float _CameraDepthTexture;
 		sampler2D_float _CameraDepthNormalsTexture;
 				
@@ -23,10 +24,21 @@
 			return (value - from) / (to - from);
 		}
 
+		inline float getDepth(float2 uv)
+		{
+			#if HIGH_PRECISION_ON
+			return tex2D(_DepthNormalMapF32, uv).x;
+			#elif HIGH_PRECISION_OFF
+			return tex2D(_CameraDepthTexture, uv).x;
+			#endif
+
+			return 0;
+		}
+
 		inline float3 getVSPosition(float2 uv)
 		{
 			// Compute view space position from the view depth
-			float depth = LinearEyeDepth(tex2D(_CameraDepthTexture, uv).x);
+			float depth = LinearEyeDepth(getDepth(uv));
 			float4 pos = float4((uv.x - 0.5) * 2.0, (0.5 - uv.y) * -2.0, 1.0, 1.0);
 			float4 ray = mul(pos, _InverseViewProject);
 			return ray.xyz * depth;
@@ -119,7 +131,7 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma fragmentoption ARB_precision_hint_fastest
-				#pragma exclude_renderers flash gles gles3
+				#pragma exclude_renderers flash
 				#pragma glsl
 				
 				struct v_data 
@@ -144,7 +156,7 @@
 			ENDCG
 		}
 
-		// (0) SSAO
+		// (1) SSAO
 		Pass
 		{
 			CGPROGRAM
@@ -152,7 +164,7 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma fragmentoption ARB_precision_hint_fastest
-				#pragma exclude_renderers flash gles gles3
+				#pragma exclude_renderers flash
 				#pragma target 3.0
 				#pragma glsl
 
@@ -160,6 +172,7 @@
 				#pragma multi_compile LUM_CONTRIB_ON  LUM_CONTRIB_OFF
 				#pragma multi_compile CUSTOM_COLOR_ON  CUSTOM_COLOR_OFF
 				#pragma multi_compile NOISE_ON  NOISE_OFF
+				#pragma multi_compile HIGH_PRECISION_ON  HIGH_PRECISION_OFF
 				
 				float4 _MainTex_TexelSize;
 				float4 _OcclusionColor;
@@ -230,7 +243,7 @@
 			ENDCG
 		}
 
-		// (1) Gaussian Blur
+		// (2) Gaussian Blur
 		Pass
 		{
 			CGPROGRAM
@@ -238,7 +251,7 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma fragmentoption ARB_precision_hint_fastest
-				#pragma exclude_renderers flash gles gles3
+				#pragma exclude_renderers flash
 				#pragma glsl
 
 				#pragma multi_compile CUSTOM_COLOR_ON  CUSTOM_COLOR_OFF
@@ -291,7 +304,7 @@
 			ENDCG
 		}
 
-		// (2) Bilateral Gaussian Blur
+		// (3) Bilateral Gaussian Blur
 		Pass
 		{
 			CGPROGRAM
@@ -299,10 +312,11 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma fragmentoption ARB_precision_hint_fastest
-				#pragma exclude_renderers flash gles gles3
+				#pragma exclude_renderers flash
 				#pragma glsl
 
 				#pragma multi_compile CUSTOM_COLOR_ON  CUSTOM_COLOR_OFF
+				#pragma multi_compile HIGH_PRECISION_ON  HIGH_PRECISION_OFF
 
 				float2 _Direction;
 				float _BilateralThreshold;
@@ -329,16 +343,16 @@
 				float4 frag(v2f i) : COLOR
 				{
 					float4 depthTmp, coeff;
-					float depth = Linear01Depth(tex2D(_CameraDepthTexture, i.uv).x);
+					float depth = Linear01Depth(getDepth(i.uv));
 
 					#if CUSTOM_COLOR_ON
 					
 					float3 c = tex2D(_MainTex, i.uv).rgb * 0.2270270270;
 					
-					depthTmp.x = Linear01Depth(tex2D(_CameraDepthTexture, i.uv1.xy).x);
-					depthTmp.y = Linear01Depth(tex2D(_CameraDepthTexture, i.uv1.zw).x);
-					depthTmp.z = Linear01Depth(tex2D(_CameraDepthTexture, i.uv2.xy).x);
-					depthTmp.w = Linear01Depth(tex2D(_CameraDepthTexture, i.uv2.zw).x);
+					depthTmp.x = Linear01Depth(getDepth(i.uv1.xy));
+					depthTmp.y = Linear01Depth(getDepth(i.uv1.zw));
+					depthTmp.z = Linear01Depth(getDepth(i.uv2.xy));
+					depthTmp.w = Linear01Depth(getDepth(i.uv2.zw));
 					coeff = 1.0 / (1e-05 + abs(depth - depthTmp));
 					c += tex2D(_MainTex, i.uv1.xy).rgb * coeff.x;
 					c += tex2D(_MainTex, i.uv1.zw).rgb * coeff.y;
@@ -352,10 +366,10 @@
 					
 					float c = tex2D(_MainTex, i.uv).r * 0.2270270270;
 
-					depthTmp.x = Linear01Depth(tex2D(_CameraDepthTexture, i.uv1.xy).x);
-					depthTmp.y = Linear01Depth(tex2D(_CameraDepthTexture, i.uv1.zw).x);
-					depthTmp.z = Linear01Depth(tex2D(_CameraDepthTexture, i.uv2.xy).x);
-					depthTmp.w = Linear01Depth(tex2D(_CameraDepthTexture, i.uv2.zw).x);
+					depthTmp.x = Linear01Depth(getDepth(i.uv1.xy));
+					depthTmp.y = Linear01Depth(getDepth(i.uv1.zw));
+					depthTmp.z = Linear01Depth(getDepth(i.uv2.xy));
+					depthTmp.w = Linear01Depth(getDepth(i.uv2.zw));
 					coeff = 1.0 / (1e-05 + abs(depth - depthTmp));
 					c += tex2D(_MainTex, i.uv1.xy).r * coeff.x;
 					c += tex2D(_MainTex, i.uv1.zw).r * coeff.y;
@@ -371,7 +385,7 @@
 			ENDCG
 		}
 
-		// (3) Composite
+		// (4) Composite
 		Pass
 		{
 			CGPROGRAM
@@ -379,7 +393,7 @@
 				#pragma vertex vert
 				#pragma fragment frag
 				#pragma fragmentoption ARB_precision_hint_fastest
-				#pragma exclude_renderers flash gles gles3
+				#pragma exclude_renderers flash
 				#pragma glsl
 
 				#pragma multi_compile CUSTOM_COLOR_ON  CUSTOM_COLOR_OFF

@@ -43,9 +43,9 @@ Shader "Custom/MolShader"
 		
 			struct vs2hs
 			{
-	            float3 pos : CPOINT;
-	            float4 rot : COLOR0;
-	            float4 info : COLOR1;
+	            float3 pos : FLOAT40;
+	            float4 rot : FLOAT41;
+	            float4 info : FLOAT42;
         	};
         	
         	struct hsConst

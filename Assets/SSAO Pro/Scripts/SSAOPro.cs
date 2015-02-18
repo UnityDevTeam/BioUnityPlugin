@@ -27,6 +27,7 @@ public class SSAOPro : MonoBehaviour
 
 	public AOMode Mode = AOMode.V12;
 	public Texture2D NoiseTexture;
+	public bool HighPrecision = true;
 	public SampleCount Samples = SampleCount.Medium;
 
 	[Range(1, 4)]
@@ -49,7 +50,7 @@ public class SSAOPro : MonoBehaviour
 
 	public Color OcclusionColor = Color.black;
 
-	public float CutoffDistance = 200f;
+	public float CutoffDistance = 150f;
 	public float CutoffFalloff = 50f;
 
 	public BlurMode Blur = BlurMode.None;
@@ -136,16 +137,25 @@ public class SSAOPro : MonoBehaviour
 		}
 
 		// Disable if we don't support render textures
-		if (!SystemInfo.supportsRenderTextures || !SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RFloat))
+		if (SystemInfo.supportsRenderTextures)
 		{
-			if (!SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth))
+			if (!SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RFloat))
 			{
-				Debug.LogWarning("RFloat && Depth RenderTextures are not supported on this platform.");
-				enabled = false;
-				return;
-			}
+				if (!SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.Depth))
+				{
+					Debug.LogWarning("RFloat && Depth RenderTextures are not supported on this platform.");
+					enabled = false;
+					return;
+				}
 
-			m_RTFormat = RenderTextureFormat.Depth;
+				m_RTFormat = RenderTextureFormat.Depth;
+			}
+		}
+		else
+		{
+			Debug.LogWarning("RenderTextures are not supported on this platform.");
+			enabled = false;
+			return;
 		}
 
 		// Disable the image effect if the shaders can't run on the users graphics card
@@ -170,19 +180,6 @@ public class SSAOPro : MonoBehaviour
 	{
 		m_Camera = GetComponent<Camera>();
 		m_Camera.depthTextureMode |= DepthTextureMode.DepthNormals;
-
-		// Create the camera used to generate the high-precision normals & depth maps
-		if (m_RWSCamera == null)
-		{
-			GameObject go = new GameObject("Depth Normal Camera", typeof(Camera));
-			go.hideFlags = HideFlags.HideAndDontSave;
-			m_RWSCamera = go.camera;
-			m_RWSCamera.CopyFrom(m_Camera);
-			m_RWSCamera.renderingPath = RenderingPath.Forward;
-			m_RWSCamera.clearFlags = CameraClearFlags.Color;
-			m_RWSCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
-			m_RWSCamera.enabled = false;
-		}
 	}
 
 	void OnDestroy()
@@ -199,13 +196,31 @@ public class SSAOPro : MonoBehaviour
 
 	void OnPreRender()
 	{
+		if (!HighPrecision)
+			return;
+
+		// Create the camera used to generate the high-precision normals & depth maps
+		if (m_RWSCamera == null)
+		{
+			GameObject go = new GameObject("Depth Normal Camera", typeof(Camera));
+			go.hideFlags = HideFlags.HideAndDontSave;
+			m_RWSCamera = go.camera;
+			m_RWSCamera.CopyFrom(m_Camera);
+			m_RWSCamera.renderingPath = RenderingPath.Forward;
+			m_RWSCamera.clearFlags = CameraClearFlags.Color;
+			m_RWSCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
+			m_RWSCamera.enabled = false;
+		}
+
 		// Render depth & normals to a custom Float RenderTexture
 		m_RWSCamera.CopyFrom(m_Camera);
+		m_RWSCamera.rect = new Rect(0f, 0f, 1f, 1f);
 		m_RWSCamera.renderingPath = RenderingPath.Forward;
 		m_RWSCamera.clearFlags = CameraClearFlags.Color;
 		m_RWSCamera.backgroundColor = new Color(1f, 1f, 1f, 1f);
+		m_RWSCamera.farClipPlane = CutoffDistance;
 
-		RenderTexture rt = RenderTexture.GetTemporary((int)m_Camera.pixelWidth, (int)m_Camera.pixelHeight, 24, RenderTextureFormat.RFloat);
+		RenderTexture rt = RenderTexture.GetTemporary((int)m_Camera.pixelWidth, (int)m_Camera.pixelHeight, 24, m_RTFormat);
 		rt.filterMode = FilterMode.Bilinear;
 		m_RWSCamera.targetTexture = rt;
 		m_RWSCamera.RenderWithShader(m_ShaderDepthNormal, "RenderType");
@@ -249,7 +264,7 @@ public class SSAOPro : MonoBehaviour
 		if (Blur == BlurMode.None)
 		{
 			RenderTexture rt = RenderTexture.GetTemporary(source.width / Downsampling, source.height / Downsampling, 0);
-			Graphics.Blit(rt, rt, Material, 0);
+			Graphics.Blit(rt, rt, Material, 0); // Clear
 
 			if (DebugAO)
 			{
@@ -271,7 +286,7 @@ public class SSAOPro : MonoBehaviour
 			int d = BlurDownsampling ? Downsampling : 1;
 			RenderTexture rt1 = RenderTexture.GetTemporary(source.width / d, source.height / d, 0);
 			RenderTexture rt2 = RenderTexture.GetTemporary(source.width / Downsampling, source.height / Downsampling, 0);
-			Graphics.Blit(rt1, rt1, Material, 0);
+			Graphics.Blit(rt1, rt1, Material, 0); // Clear
 
 			// SSAO
 			Graphics.Blit(source, rt1, Material, 1);
@@ -282,12 +297,20 @@ public class SSAOPro : MonoBehaviour
 
 			// Vertical blur
 			Material.SetVector("_Direction", new Vector2(0f, 1f / source.height));
-			Graphics.Blit(rt2, DebugAO ? destination : rt1, Material, pass);
 
 			if (!DebugAO)
 			{
+				#if (UNITY_ANDROID || UNITY_IPHONE || UNITY_XBOX360)
+				rt1.DiscardContents();
+				#endif
+
+				Graphics.Blit(rt2, rt1, Material, pass);
 				Material.SetTexture("_SSAOTex", rt1);
 				Graphics.Blit(source, destination, Material, 4);
+			}
+			else
+			{
+				Graphics.Blit(rt2, destination, Material, pass);
 			}
 
 			RenderTexture.ReleaseTemporary(rt1);
@@ -297,6 +320,7 @@ public class SSAOPro : MonoBehaviour
 
 	// State switching... Gah, ugly but does the job until I refactor it.
 	bool __useNoise = false;
+	bool __highPrecision = false;
 	float __lumContribution = 0f;
 	Color __occlusionColor = Color.black;
 	SampleCount __samples = SampleCount.Medium;
@@ -304,21 +328,24 @@ public class SSAOPro : MonoBehaviour
 
 	void CheckShaderStates(bool force)
 	{
-		if (!force)
+		if (!HighPrecision)
+			m_Camera.depthTextureMode |= DepthTextureMode.Depth;
+
+		if (!force &&
+			__aoMode == Mode &&
+			__useNoise == (NoiseTexture != null) &&
+			__highPrecision == HighPrecision &&
+			__lumContribution == LumContribution &&
+			__occlusionColor == OcclusionColor &&
+			__samples == Samples)
 		{
-			if (__aoMode == Mode &&
-				__useNoise == (NoiseTexture != null) &&
-				__lumContribution == LumContribution &&
-				__occlusionColor == OcclusionColor &&
-				__samples == Samples)
-			{
-				return;
-			}
+			return;
 		}
 
 		Material.shaderKeywords = new string[]
 		{
 			(NoiseTexture != null) ? "NOISE_ON" : "NOISE_OFF",
+			(HighPrecision) ? "HIGH_PRECISION_ON" : "HIGH_PRECISION_OFF",
 			(LumContribution > 0.0001f) ? "LUM_CONTRIB_ON" : "LUM_CONTRIB_OFF",
 			(OcclusionColor == Color.black) ? "CUSTOM_COLOR_OFF" : "CUSTOM_COLOR_ON",
 			(Samples == SampleCount.Low) ? "SAMPLES_LOW"
@@ -328,6 +355,7 @@ public class SSAOPro : MonoBehaviour
 		};
 
 		__useNoise = (NoiseTexture != null);
+		__highPrecision = HighPrecision;
 		__lumContribution = LumContribution;
 		__occlusionColor = OcclusionColor;
 		__samples = Samples;

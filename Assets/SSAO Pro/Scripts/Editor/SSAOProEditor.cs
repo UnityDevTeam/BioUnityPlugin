@@ -8,6 +8,7 @@ public class SSAOProEditor : Editor
 
 	SerializedProperty p_aoMode;
 	SerializedProperty p_noiseTexture;
+	SerializedProperty p_highPrecision;
 	SerializedProperty p_samples;
 	SerializedProperty p_downsampling;
 	SerializedProperty p_radius;
@@ -26,6 +27,7 @@ public class SSAOProEditor : Editor
 	{
 		p_aoMode = serializedObject.FindProperty("Mode");
 		p_noiseTexture = serializedObject.FindProperty("NoiseTexture");
+		p_highPrecision = serializedObject.FindProperty("HighPrecision");
 		p_samples = serializedObject.FindProperty("Samples");
 		p_downsampling = serializedObject.FindProperty("Downsampling");
 		p_radius = serializedObject.FindProperty("Radius");
@@ -69,6 +71,7 @@ public class SSAOProEditor : Editor
 
 		p_noiseTexture.objectReferenceValue = noise;
 
+		EditorGUILayout.PropertyField(p_highPrecision, new GUIContent("High Precision", "Use a high precision depth map. Slower but higher quality."));
 		EditorGUILayout.PropertyField(p_samples, new GUIContent("Sample Count", "Number of ambient occlusion samples (higher is slower)"));
 		EditorGUILayout.PropertyField(p_downsampling, new GUIContent("Downsampling", "The resolution at which calculations should be performed (for example, a downsampling value of 2 will work at half the screen resolution)"));
 		EditorGUILayout.PropertyField(p_intensity, new GUIContent("Intensity", "Occlusion multiplier (degree of darkness added by ambient occlusion)"));

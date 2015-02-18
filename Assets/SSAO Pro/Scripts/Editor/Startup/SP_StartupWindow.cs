@@ -2,7 +2,7 @@
 using UnityEditor;
 using System;
 using System.Text.RegularExpressions;
- 
+  
 public class SP_StartupWindowProcessor : AssetPostprocessor
 {
 	static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
@@ -13,8 +13,8 @@ public class SP_StartupWindowProcessor : AssetPostprocessor
 			if (SP_StartupWindow.Init(false))
 				break;
 	}
-}
-
+}  
+ 
 public class SP_StartupWindow : EditorWindow
 {
 	public static string identifier = "TH_SSAOPro";
