@@ -141,29 +141,26 @@ public class MoleculeDisplayScript : MonoBehaviour
         ReleaseResources();
     }
 
-    public void AddMoleculeType(string pdbName)
+    public void AddMoleculeType(Vector4[] atoms)
     {
         CreateResources();
 
-        Debug.Log("Load molecule : " + pdbName);
-        var atoms = PdbReader.ReadPdbFile(Application.dataPath + "/Molecules/" + pdbName + ".pdb");
-        
-        _atomCount.Add(atoms.Count);
+        _atomCount.Add(atoms.Length);
         _atomStart.Add(_atomDataPdb.Count);
         _atomDataPdb.AddRange(atoms);
-        
-        _molAtomCountBuffer.SetData(_atomCount.ToArray());        
-        _molAtomStartBuffer.SetData(_atomStart.ToArray());        
+
+        _molAtomCountBuffer.SetData(_atomCount.ToArray());
+        _molAtomStartBuffer.SetData(_atomStart.ToArray());
         _atomDataPdbBuffer.SetData(_atomDataPdb.ToArray());
     }
 
-    public void UpdateMoleculeData(Vector4[] positions, Vector4[] rotations, int[] types, int[] states, Color[] colors, float scale, bool showAtomColors)
+    public void UpdateMoleculeData(int numMolecules, Vector4[] positions, Vector4[] rotations, int[] types, int[] states, Color[] colors, float scale, bool showAtomColors)
     {
         if (enabled == false) return;
 
         CreateResources();
 
-        _numMoleculeInstances = positions.Length;
+        _numMoleculeInstances = numMolecules;
 
         if (_numMoleculeInstances > NumMoleculeInstancesMax) throw new Exception("Too much instances to draw, resize compute buffers");
 

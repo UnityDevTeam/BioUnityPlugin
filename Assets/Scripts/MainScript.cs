@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 
 [ExecuteInEditMode]
@@ -17,6 +18,9 @@ public class MainScript : MonoBehaviour
     public float Scale = 0.5f;
 
     public bool ShowAtomColors = false;
+    
+    // Reference to the renderer script attached to the camera (linked in the editor)
+    public MoleculeDisplayScript _moleculeDisplayScript;
 
     /*****/
 
@@ -25,41 +29,75 @@ public class MainScript : MonoBehaviour
 
     [NonSerialized]
     private MoleculeScript _selectedMolecule = null;
-
-    // Reference to the renderer script attached to the camera
-    private MoleculeDisplayScript _moleculeDisplayScript = null;
     
-    // List of molecule names
-    public List<Color> MoleculeColors = new List<Color>();
-
     [NonSerialized]
     private List<Color> _moleculeColors = new List<Color>();
     
     // List of molecule names
+    [NonSerialized]
     private List<string> _moleculeNames = new List<string>();
 
     // List of molecule objects in the scene this must not be serialized otherwise it cannot reload the scene
     [NonSerialized]
     protected List<GameObject> GameObjects = new List<GameObject>();
 
-    public void CheckIfColorsChanged()
+    /*****/
+
+    void OnEnable()
     {
-        if (MoleculeColors.SequenceEqual(_moleculeColors)) return;
-
-        //Debug.Log("Color changed");
-        _moleculeColors = new List<Color>(MoleculeColors);
-
-        foreach (var molecule in GameObjects.Select(go => go.GetComponent<MoleculeScript>()))
+        // If the list count is different and the children count we reload the scene
+        if (GameObjects.Count != transform.childCount)
         {
-            molecule.Color = MoleculeColors[molecule.Type];
+            ReloadScene();
         }
     }
 
-    int AddMoleculeType(string pdbName, Color color)
+    void ReloadScene()
     {
-        MoleculeColors.Add(color);
-       _moleculeNames.Add(pdbName);
-       _moleculeDisplayScript.AddMoleculeType(pdbName);
+        Debug.Log("Reload scene: " + gameObject.name);
+
+        GameObjects.Clear();
+        _moleculeNames.Clear();
+        _moleculeColors.Clear();
+        
+        foreach (var go in from Transform t in transform select t.gameObject)
+        {
+            var molecule = go.GetComponent<MoleculeScript>();
+            var pdbName = go.name.Split('_')[1];
+
+            // Check if molecule already exists
+            if (!HasMoleculeType(pdbName))
+            {
+                Debug.Log("Load molecule : " + pdbName);
+                var atoms = PdbReader.ReadPdbFile(Application.dataPath + "/Molecules/" + pdbName + ".pdb");
+
+                // Add new molecule type
+                AddMoleculeType(pdbName, molecule.Color, atoms);
+            }
+
+            molecule.Type = GetMoleculeType(pdbName);
+            GameObjects.Add(go);
+        }
+    }
+    
+    public bool HasMoleculeType(string pdbName)
+    {
+        return _moleculeNames.IndexOf(pdbName) >= 0;
+    }
+
+    public int GetMoleculeType(string pdbName)
+    {
+        return _moleculeNames.IndexOf(pdbName);
+    }
+
+    public int AddMoleculeType(string pdbName, Color color, Vector4[] atoms)
+    {
+        // If molecule type is not present => add new type to the system
+        if (HasMoleculeType(pdbName)) throw new Exception("Molecule type already exists");
+
+        _moleculeColors.Add(color);
+        _moleculeNames.Add(pdbName);
+        _moleculeDisplayScript.AddMoleculeType(atoms);
 
         return _moleculeNames.Count - 1;
     }
@@ -84,10 +122,7 @@ public class MainScript : MonoBehaviour
     public void AddMoleculeInstance(string pdbName, Vector3 position, Quaternion rotation)
     {
         // If molecule type is not present => add new type to the system
-        if(_moleculeNames.IndexOf(pdbName) < 0)
-        {
-            AddMoleculeType(pdbName, new Color(UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f), UnityEngine.Random.Range(0.0f, 1.0f)));
-        }
+        if (!HasMoleculeType(pdbName)) throw new Exception("Molecule type unknown");
 
         int uniqueId = GetUniqueId();
 
@@ -96,27 +131,18 @@ public class MainScript : MonoBehaviour
         gameObject.transform.parent = transform;
         gameObject.transform.position = position;
         gameObject.transform.rotation = rotation;
-        
+
         // Create Molecule component and assign attributes
         var molecule = gameObject.AddComponent<MoleculeScript>();
-        molecule.MainScript = this;
         molecule.Id = uniqueId;
-        molecule.Type =  _moleculeNames.IndexOf(pdbName);
+        molecule.Type = _moleculeNames.IndexOf(pdbName);
         molecule.State = (int)MolState.Normal;
-        molecule.Color = MoleculeColors[molecule.Type];
+        molecule.Color = _moleculeColors[molecule.Type];
 
         // Add game object to the list
         GameObjects.Add(gameObject);
 
         Debug.Log("New molecule instance: " + gameObject.name);
-    }
-
-    public void NotifyDestroy(GameObject gameObject)
-    {
-        if (_selectedMolecule != null && gameObject.GetComponent<MoleculeScript>().Id == _selectedMolecule.Id) _selectedMolecule = null;
-
-        GameObjects.Remove(gameObject);
-        Debug.Log("Remove molecule instance: " + gameObject.name);
     }
 
     public void SelectMolecule(int moleculeIndex)
@@ -146,15 +172,9 @@ public class MainScript : MonoBehaviour
     }
 
     // The update routine
-	protected void UpdateRoutine()
+	void Update()
 	{
-        // Fetch reference to the display script
-        if (_moleculeDisplayScript == null) _moleculeDisplayScript = GameObject.Find("Main Camera").GetComponent<MoleculeDisplayScript>();
-
-        // If the list count is different and the children count we reload the scene
-	    if (GameObjects.Count != transform.childCount) ReloadScene();
-
-	    if (_moleculeDisplayScript.SelectedMolecule != _previousSelectedMoleculeIndex)
+        if (_moleculeDisplayScript.SelectedMolecule != _previousSelectedMoleculeIndex)
 	    {
 	        SelectMolecule(_moleculeDisplayScript.SelectedMolecule);
 	        _previousSelectedMoleculeIndex = _moleculeDisplayScript.SelectedMolecule;
@@ -163,32 +183,7 @@ public class MainScript : MonoBehaviour
         // Send data to the renderer
 	    SendMoleculeDataToRenderer();         
 	}
-
-    void ReloadScene()
-    {
-        Debug.Log("Reload scene: " + gameObject.name);
-
-        MoleculeColors.Clear();
-        GameObjects.Clear();
-        _moleculeNames.Clear();
-
-        foreach (var g in from Transform t in transform select t.gameObject)
-        {
-            var pdbName = g.name.Split('_')[1];
-
-            // If molecule type is not present => add new type to the system
-            if (_moleculeNames.IndexOf(pdbName) < 0)
-            {
-                var molecule = g.GetComponent<MoleculeScript>();
-                molecule.Type = AddMoleculeType(pdbName, molecule.Color);
-            }
-
-            GameObjects.Add(g);
-        }
-
-        _moleculeColors = new List<Color>(MoleculeColors);
-    }
-
+    
     void SendMoleculeDataToRenderer()
     {
         // Molecule data to be transfered to the renderer, do not modify
@@ -196,21 +191,29 @@ public class MainScript : MonoBehaviour
         var rotations = new Vector4[GameObjects.Count];
         var states = new int[GameObjects.Count];
         var types = new int[GameObjects.Count];
-        var colors = MoleculeColors.ToArray();
+        var colors = _moleculeColors.ToArray();
 
         // Push the molecules information into the buffers
-        for (int i = 0; i < GameObjects.Count; i++)
+        int count = 0;
+        foreach(var go in GameObjects.ToArray())
         {
-            var go = GameObjects[i];
+            if (go == null)
+            {
+                GameObjects.Remove(go);
+                continue;
+            }
+
             var molecule = go.GetComponent<MoleculeScript>();
 
-            positions[i] = go.transform.position;
-            rotations[i] = Helper.QuanternionToVector4(go.transform.rotation);
-            states[i] = molecule.State;
-            types[i] = molecule.Type;
+            positions[count] = go.transform.position;
+            rotations[count] = Helper.QuanternionToVector4(go.transform.rotation);
+            states[count] = molecule.State;
+            types[count] = molecule.Type;
+
+            count ++;
         }
 
         // Send mol information to the renderer
-        _moleculeDisplayScript.UpdateMoleculeData(positions, rotations, types, states, colors, Scale, ShowAtomColors);
+        _moleculeDisplayScript.UpdateMoleculeData(count, positions, rotations, types, states, colors, Scale, ShowAtomColors);
     }
 }

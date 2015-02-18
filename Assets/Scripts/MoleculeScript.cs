@@ -13,7 +13,7 @@ public class MoleculeScript : MonoBehaviour
     [SerializeField]
     public int Id;
 
-    [HideInInspector]
+    //[HideInInspector]
     [SerializeField]
     public int Type;
 
@@ -24,11 +24,4 @@ public class MoleculeScript : MonoBehaviour
     [HideInInspector]
     [SerializeField]
     public Color Color;
-    
-    public MainScript MainScript;
-
-    void OnDestroy()
-    {
-        MainScript.NotifyDestroy(this.gameObject);
-    }
 }
