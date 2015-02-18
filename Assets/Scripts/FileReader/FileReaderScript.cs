@@ -14,11 +14,11 @@ class FileReaderScript : MonoBehaviour
 
     private MainScript mainscript;
 
-    private Boolean UseChains = false;
+    private Boolean UseChains = true;
 
     void Start()
     {
-        mainscript = GameObject.FindObjectOfType<MainScript>();
+
     }
 
     public void useChains(Boolean useChains)
@@ -49,6 +49,8 @@ class FileReaderScript : MonoBehaviour
 
     private void addBiounitToScene(BioUnit biounit)
     {
+        if (mainscript == null) mainscript = GameObject.FindObjectOfType<MainScript>();
+
         if (UseChains)
         {
             Debug.Log("Biounit will be added to Scene.");

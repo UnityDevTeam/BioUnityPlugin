@@ -83,6 +83,8 @@ class PdbFileReader : IFileReader
                 //store position of Subunit
                 subunitPositions.Add(position);
                 //Calculate quarternion and store it
+                Debug.Log("Rotationmatrix: " + matrix);
+                Debug.Log("Quaternion: " + Helper.RotationMatrixToQuaternion(matrix));
                 subunitRotations.Add(Helper.RotationMatrixToQuaternion(matrix));
 
                 //reset variables
@@ -90,7 +92,20 @@ class PdbFileReader : IFileReader
                 position = new Vector3();
             }
         }
+
+        FallbackIfRemarkIsMissing();
+
         Debug.Log("Biounit consists of " + subunitRotations.Count + " subunits.");
+    }
+
+    private void FallbackIfRemarkIsMissing()
+    {
+        if (subunitPositions.Count == 0)
+        {
+            Debug.Log("No remark for biounit greation was found! Using fallback values.");
+            subunitPositions.Add(Vector3.zero);
+            subunitRotations.Add(Quaternion.identity);
+        }
     }
 
     private void loadAtoms(){
