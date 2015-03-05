@@ -27,7 +27,7 @@ class FileReaderScript : MonoBehaviour
     }
 
     public void readFile(String path){
-        BioUnit biounit = null;
+        List<BioUnit> biounits = null;
         
         if (path.EndsWith("cif"))
         {
@@ -35,7 +35,7 @@ class FileReaderScript : MonoBehaviour
         }
         else if (path.EndsWith("pdb"))
         {
-            biounit = pdbFileReader.readFile(path);
+            biounits = pdbFileReader.readFile(path);
             Debug.Log("Pdb File loaded!");
         }
         else
@@ -44,7 +44,8 @@ class FileReaderScript : MonoBehaviour
             return;
         }
 
-        addBiounitToScene(biounit);
+        Debug.Log("Support for multiple biounits will follow!");
+        addBiounitToScene(biounits[0]);
     }
 
     private void addBiounitToScene(BioUnit biounit)

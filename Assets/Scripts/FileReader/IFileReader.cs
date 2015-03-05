@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 
 
 interface IFileReader
 {
-    BioUnit readFile(string pathToFile);
+    List<BioUnit> readFile(string pathToFile);
 }
 

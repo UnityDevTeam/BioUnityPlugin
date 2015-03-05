@@ -14,7 +14,7 @@ class PdbFileReader : IFileReader
 
     private String[] linesOfFile;
 
-    public BioUnit readFile(string pathToFile)
+    public List<BioUnit> readFile(string pathToFile)
     {
         if (!File.Exists(pathToFile)) throw new Exception("Pdb file not found");
 
@@ -24,7 +24,10 @@ class PdbFileReader : IFileReader
         loadRotationsAndPositions();
         loadAtoms();
 
-        return new BioUnit(atomsSeperatedByChains, subunitRotations, subunitPositions, readNameOutOfPath(pathToFile));
+        List<BioUnit> biounits = new List<BioUnit>();
+        biounits.Add(new BioUnit(atomsSeperatedByChains, subunitRotations, subunitPositions, readNameOutOfPath(pathToFile)));
+
+        return biounits;
     }
 
     private String readNameOutOfPath(String path)
