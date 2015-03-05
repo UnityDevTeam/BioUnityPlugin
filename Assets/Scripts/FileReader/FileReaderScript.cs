@@ -14,7 +14,7 @@ class FileReaderScript : MonoBehaviour
 
     private MainScript mainscript;
 
-    private Boolean UseChains = true;
+    private Boolean UseChains = false;
 
     void Start()
     {
