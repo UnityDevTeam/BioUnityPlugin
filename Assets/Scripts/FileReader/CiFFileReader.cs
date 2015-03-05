@@ -11,7 +11,7 @@ class CifFileReader : IFileReader
     private List<Quaternion> subunitRotations;
     private List<Vector3> subunitPositions;
 
-    public BioUnit readFile(string pathToFile)
+    public List<BioUnit> readFile(string pathToFile)
     {
         return null;
     }
